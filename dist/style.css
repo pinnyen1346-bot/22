@@ -1,6 +1,6 @@
 /* 1. 全域背景設定：柔和粉色與置中 */
 body {
-    background-color: #Fee5F5 !important; /* 您指定的粉色 */
+    background-color: #CCDDFF !important; /* 您指定的粉色 */
     display: flex;
     flex-direction: column;
     align-items: center;    /* 水平置中 */
