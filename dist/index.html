@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>粉紅計算機</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #CCDDFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: "Arial Rounded MT Bold", "Microsoft JhengHei", Arial, sans-serif;
+    }
+    .calc-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #FF69B4;
+      text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+    }
+    .calc-box {
+      background: #fff;
+      border: 4px solid #333;
+      border-radius: 24px;
+      padding: 20px 20px 16px;
+      box-shadow: 8px 8px 0 #aabbee;
+    }
+    .calc-subdisp {
+      font-size: 13px;
+      text-align: right;
+      color: #FF85A1;
+      min-height: 20px;
+      margin-bottom: 6px;
+      padding-right: 4px;
+    }
+    .calc-display {
+      width: 100%;
+      height: 64px;
+      font-size: 32px;
+      text-align: right;
+      padding: 0 14px;
+      border: 4px solid #333;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      background: #fff;
+      color: #333;
+      font-family: "Arial Rounded MT Bold", monospace;
+      outline: none;
+    }
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 70px);
+      gap: 10px;
+    }
+    .btn {
+      width: 70px;
+      height: 70px;
+      font-size: 24px;
+      font-weight: 700;
+      border: 4px solid #333;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: transform 0.08s, box-shadow 0.08s;
+      font-family: "Arial Rounded MT Bold", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:active { transform: translateY(5px); }
+    .btn-num  { background: #FFB6C1; color: #7B1A2E; box-shadow: 0 6px 0 #D64D6D; }
+    .btn-num:active  { box-shadow: 0 1px 0 #D64D6D; }
+    .btn-op   { background: #FF85A1; color: #fff;    box-shadow: 0 6px 0 #C43860; }
+    .btn-op:active   { box-shadow: 0 1px 0 #C43860; }
+    .btn-eq   { background: #FF4D80; color: #fff;    box-shadow: 0 6px 0 #B0003A; }
+    .btn-eq:active   { box-shadow: 0 1px 0 #B0003A; }
+    .btn-fn   { background: #FFACE4; color: #72243E; box-shadow: 0 6px 0 #E88BBB; }
+    .btn-fn:active   { box-shadow: 0 1px 0 #E88BBB; }
+    .btn-zero { grid-column: span 2; width: 100%; }
+  </style>
+</head>
+<body>
+
+  <div class="calc-title">✿ 粉紅計算機 ✿</div>
+  <div class="calc-box">
+    <div class="calc-subdisp" id="sub-disp"></div>
+    <input class="calc-display" id="disp" type="text" value="0" readonly />
+    <div class="btn-grid">
+      <button class="btn btn-fn"  onclick="calcFn('AC')">AC</button>
+      <button class="btn btn-fn"  onclick="calcFn('+/-')">+/-</button>
+      <button class="btn btn-fn"  onclick="calcFn('%')">%</button>
+      <button class="btn btn-op"  onclick="calcOp('/')">÷</button>
+
+      <button class="btn btn-num" onclick="calcNum('7')">7</button>
+      <button class="btn btn-num" onclick="calcNum('8')">8</button>
+      <button class="btn btn-num" onclick="calcNum('9')">9</button>
+      <button class="btn btn-op"  onclick="calcOp('*')">×</button>
+
+      <button class="btn btn-num" onclick="calcNum('4')">4</button>
+      <button class="btn btn-num" onclick="calcNum('5')">5</button>
+      <button class="btn btn-num" onclick="calcNum('6')">6</button>
+      <button class="btn btn-op"  onclick="calcOp('-')">−</button>
+
+      <button class="btn btn-num" onclick="calcNum('1')">1</button>
+      <button class="btn btn-num" onclick="calcNum('2')">2</button>
+      <button class="btn btn-num" onclick="calcNum('3')">3</button>
+      <button class="btn btn-op"  onclick="calcOp('+')">+</button>
+
+      <button class="btn btn-num btn-zero" onclick="calcNum('0')">0</button>
+      <button class="btn btn-num" onclick="calcNum('.')">.</button>
+      <button class="btn btn-eq"  onclick="calcEq()">=</button>
+    </div>
+  </div>
+
+  <script>
+    let cur = '0', prev = '', op = '', justEq = false;
+    const disp = document.getElementById('disp');
+    const sub  = document.getElementById('sub-disp');
+
+    function setDisp(v) {
+      const s = String(v);
+      disp.value = s.length > 12 ? parseFloat(v).toPrecision(8) : s;
+    }
+
+    function calcNum(n) {
+      if (justEq) { cur = '0'; justEq = false; }
+      if (n === '.' && cur.includes('.')) return;
+      cur = (cur === '0' && n !== '.') ? n : cur + n;
+      setDisp(cur);
+    }
+
+    function calcOp(o) {
+      justEq = false;
+      if (prev && op && cur !== '') {
+        const r = compute(parseFloat(prev), parseFloat(cur), op);
+        prev = String(r); cur = ''; op = o;
+        setDisp(prev);
+        sub.textContent = prev + ' ' + opSym(o);
+      } else {
+        prev = cur; cur = ''; op = o;
+        sub.textContent = prev + ' ' + opSym(o);
+      }
+    }
+
+    function calcEq() {
+      if (!op || prev === '') return;
+      const a = parseFloat(prev), b = parseFloat(cur === '' ? prev : cur);
+      const r = compute(a, b, op);
+      sub.textContent = prev + ' ' + opSym(op) + ' ' + (cur || prev) + ' =';
+      cur = String(r); prev = ''; op = ''; justEq = true;
+      setDisp(cur);
+    }
+
+    function calcFn(f) {
+      if (f === 'AC')  { cur = '0'; prev = ''; op = ''; sub.textContent = ''; setDisp('0'); return; }
+      if (f === '+/-') { cur = String(-parseFloat(cur)); setDisp(cur); return; }
+      if (f === '%')   { cur = String(parseFloat(cur) / 100); setDisp(cur); return; }
+    }
+
+    function compute(a, b, o) {
+      if (o === '+') return round(a + b);
+      if (o === '-') return round(a - b);
+      if (o === '*') return round(a * b);
+      if (o === '/') return b === 0 ? 'Err' : round(a / b);
+    }
+
+    function round(v) { return parseFloat(v.toPrecision(10)); }
+
+    function opSym(o) { return {'+':'+', '-':'−', '*':'×', '/':'÷'}[o] || o; }
+
+    document.addEventListener('keydown', e => {
+      if ('0123456789.'.includes(e.key)) calcNum(e.key);
+      else if (e.key === '+') calcOp('+');
+      else if (e.key === '-') calcOp('-');
+      else if (e.key === '*') calcOp('*');
+      else if (e.key === '/') { e.preventDefault(); calcOp('/'); }
+      else if (e.key === 'Enter' || e.key === '=') calcEq();
+      else if (e.key === 'Escape') calcFn('AC');
+      else if (e.key === 'Backspace') {
+        cur = cur.length > 1 ? cur.slice(0, -1) : '0';
+        setDisp(cur);
+      }
+    });
+  </script>
+
+</body>
+</html>
